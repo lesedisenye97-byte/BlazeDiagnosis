@@ -1,0 +1,77 @@
+Welcome to the **Blaze Diaginostics** repository!
+
+##Project Overview##
+Blaze Diagnostics is a comprehensive workshop management system tailored for mechanical workshops. It enables real-time communication between mechanics and clients regarding vehicle repair progress, quotes, parts, invoicing, and collections.
+
+This repository is a collaborative environment utilized by students across multiple learning paths:
+- Software Engineering
+- Software Development
+- Cloud Administration
+- Cyber Security
+
+## 🚨 CRITICAL: Onboarding Rules (Read Before Proceeding)
+Before you touch any code or execute setup commands, you must complete the preliminary onboarding process. **Do not begin any code implementation until tasks are officially assigned to you.**
+
+Please ensure you have completed the following steps in order:
+1. Thoroughly read the primary `README.md` and the `REMOTE_INTERNSHIP_PLAN`.
+2. Complete and submit your mandatory `STUDENT_INFORMATION_FORM`.
+3. Review the team's GitHub workflow, designated group learning paths, and your first-week training schedule.
+
+##1.What you need to install first?
+
+1.1*Node.js*
+Go to nodejs.org and download the lastest version currently it is version 18 or higher and it comes with npm when you install Node.js
+1.2*PostgreSQL*
+It runs the database for you used by this project.
+1.3*Git*
+Go to git-scm.com/downloads
+Download Git for your computer (Windows, Mac, or Linux)
+Install it — just click "Next" through all the steps
+Open a program called "Git Bash" (on Windows) or "Terminal" (on Mac)
+1.4*VS code*
+(Any Code editor)
+
+##2.How to start the Project
+
+2.1 Clone the repository - Run 'npm install' - Copy' .env.example' to ' env' and fill in the values
+2.2 Start running the database (PostgreSQL)
+2.3 Run the database migrations if any occur ('npm run migiration:run')
+2.4 Run ,npm run start:dev, or use the createApp() factory en - Open browser/Postman and test routes like api/auth/login
+
+What is each technology for? – 
+•	TypeScript: Adds static typing to JavaScript for fewer bugs
+•	Node.js: Runs JavaScript on the server - NestJS (or similar structure): Organizes the backend with modules and controllers - Controllers (AuthController, CustomersController, etc.): Handle API requests for each feature 
+•	 createApp(): Central factory that creates all controllers and lists the routes 
+
+
+##3.Common Errors and How to fix them.
+
+3.1"Cannot find module" -> run npm install
+3.2 Port already in use (3000)
+3.3 Having problems with the database connection
+3.4 Missing environment variables such as (JWT_SECRET,DB_URL,ETC.)
+3.5 TypeScript errors after changes - createApp () not found (wrong import path)
+
+## Project & Repository Structure
+
+To clear up any confusion: **This Setup Guide is a standalone training resource** located in the `docs/training/` folder. It is designed to help you install prerequisites and resolve local environment errors. The primary `README.md` file in the root directory serves a separate purpose—it contains high-level project summaries, administrative details, and the overarching remote internship guidelines.
+
+Here is a map of the repository layout to help you find where the backend, documentation, database configurations, and infrastructure code 
+```text
+BlazeDiagnosis/
+.env.example          # Template for local environment variables
+docker-compose.yml    # Docker configuration for the database
+package.json          # Node.js project manifest and dependency list
+tsconfig.json         # TypeScript compiler configurations
+
+src/              # Main Backend Application Code (NestJS/TypeScript)
+main.ts           # Application entry point (executes the createApp() factory)
+auth/             # Authentication module (Controllers, services, JWT rules)
+customers/        # Customer and vehicle profile management modules
+quotes/           # Workshop quoting and part tracking modules
+database/         # Database migrations, seeders, and schemas
+
+docs/              # Internship Documentation Workspace
+internship/       # Onboarding notes and team policies
+technical/        # Architecture explanations and technical deep-dives
+training/         # Student setup guides (Where this file is located!)
