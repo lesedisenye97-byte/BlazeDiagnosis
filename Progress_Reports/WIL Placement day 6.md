@@ -56,3 +56,24 @@ All of the text on the application is the same size, Making the headers bigger o
 
 ---
 **Time Spent:** 
+
+
+** Day 2 Update: Identify current ORM usage and database models.
+
+** 1. Executive Summary
+Conducted a thorough technical investigation of the Blaze Diagnostics codebase to map out the application's structural design, verify the local development environment configuration across ports `3000` and `4000`, and identify the current data persistence lifecycle layers. 
+
+** 2. Key Discoveries & Architectural Overview
+While the system's long-term design is explicitly structured around a relational database model, the active codebase implements an isolated, decoupled architectural pattern for rapid local development.
+
+** Database Strategy (Planned vs. Active):**
+  * **Planned Blueprint:** Identified a comprehensive, enterprise-grade multi-tenant schema configured in `schema.prisma` targeting a **PostgreSQL** database backend. The layout accounts for robust state machines via enums (e.g., `JobStatus`, `QuoteStatus`) to govern the workshop operational workflow.
+  * **Active Implementation:** Discovered that the backend currently circumvents active database migrations by using a centralized, in-memory mock store (`in-memory-db`). Data mutations rely on native JavaScript array utilities to simulate persistence.
+
+* ** The 3-Tier Backend Pipeline:**
+  Traced a complete data execution flow using the `Vehicle` domain as a reference architecture:
+  1. **Controller Layer (`vehicles.controller.ts`):** Serves as the API interface. It accepts payloads, executes structural validation checks, and formats uniform JSON network responses (`ok()`).
+  2. **Service Layer (`vehicles.service.ts`):** Enforces core business logic constraints. It manages structural entity mutations, applies operational metadata (audit timestamps via `createAuditTimestamps()`), and runs data-integrity guards (blocking duplicate registration numbers or VINs).
+  3. **Repository Layer (`vehicles.repository.ts`):** Manages the direct state transitions of the data data-store. It handles complex search query filtering and applies multi-tenant isolation filters (`tenantId`) to ensure data privacy between different workshops.
+
+
