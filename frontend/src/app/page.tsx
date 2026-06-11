@@ -9,6 +9,7 @@ import { JobsPanel } from '../features/jobs/components/JobsPanel';
 import { QuotesPanel } from '../features/quotes/components/QuotesPanel';
 import { MarketplacePanel } from '../features/marketplace/components/MarketplacePanel'; 
 
+import { PartsPanel } from '../features/parts/components/PartsPanel';
 
 export default function HomePage() {
   const [selectedPartId, setSelectedPartId] = useState(1);
@@ -24,6 +25,7 @@ export default function HomePage() {
         <MarketplacePanel
           selectedPartId={selectedPartId} 
           onSelectPart={setSelectedPartId}  />
+        <PartsPanel/>
       </div>
     </AppShell>
     
