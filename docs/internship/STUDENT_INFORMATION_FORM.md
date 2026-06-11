@@ -38,7 +38,7 @@ Select the group that applies to you:
 - Do you have Node.js installed?
 - Do you have access to a computer suitable for the internship?
 - What tools have you used before?
-- Which technologies are new to you?
+- ** Which technologies are new to you? **
 
 ## Project Interest
 
