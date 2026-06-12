@@ -8,7 +8,7 @@ import { QuotesPanel } from '../features/quotes/components/QuotesPanel';
 export default function HomePage() {
   return (
     <AppShell title="Vehicle Service Platform Starter">
-      <div style={{ display: 'grid', gap: 24 , gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+      <div style={{ display: "grid", gap: 24 }}>
         <DashboardPanel />
         <CustomersPanel />
         <VehiclesPanel />
