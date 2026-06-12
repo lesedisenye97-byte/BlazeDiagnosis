@@ -38,6 +38,6 @@ Starter permission metadata has already been successfully applied to the `tenant
 * `payments` (Requires `payment.record` execution boundaries)
 * `collection` (Requires localized operational auditing metadata)
 ## Roles 
-**Owner:** JW Blignaut
-**Lead:** Gerrit Dry
-**Reviewer:** Ruvan de Klerk
+* **Owner:** JW Blignaut
+* **Lead:** Gerrit Dry
+* **Reviewer:** Ruvan de Klerk
