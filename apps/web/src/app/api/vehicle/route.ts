@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import {db} from "@/db/client";
+import {customers} from "@/db/schema";
+import {and, eq} from "drizzle-orm";
 
 export async function GET(request: Request) {
     try {
@@ -12,6 +15,25 @@ export async function GET(request: Request) {
                 {error: 'Missing required tenantId parameter'},
                 {status: 400}
             );
-        }
+        } const activeCustomers = await db
+      .select()
+      .from(customers)
+      .where(
+        and(
+          eq(customers.tenantId, tenantId),
+          eq(customers.isArchived, false)
+        )
+      );
 
-        // TODO: add the other import for vehicle and catch logic needed for the try.
+    // Return the clean data list payload
+    return NextResponse.json(activeCustomers);
+
+// Implemented the catch sequence for the error handling.
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
+  }
+}
