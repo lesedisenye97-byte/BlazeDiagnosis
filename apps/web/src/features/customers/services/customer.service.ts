@@ -1,9 +1,7 @@
 import { and, eq, ilike, or } from 'drizzle-orm';
-
 import { db } from '@/db/client';
 import { customers } from '@/db/schema';
 import { requireTenantPermission } from '@/lib/authorization/guards';
-
 import type { CreateCustomerInput } from '../schemas/customer.schema';
 
 export async function createCustomer(
@@ -11,7 +9,7 @@ export async function createCustomer(
   input: CreateCustomerInput,
 ) {
   await requireTenantPermission(tenantId, 'customers.write');
-
+  //TODO : Add duplicate check for email and phone number to prevent creating duplicate customers within the same tenant.
   const [customer] = await db
     .insert(customers)
     .values({
@@ -59,6 +57,14 @@ export async function getCustomerById(tenantId: string, customerId: string) {
 
 
   return customer ?? null;
+}
+
+//TODO: Implement the updateCustomer function to allow updating customer details while ensuring tenant isolation and proper permissions.
+export async function updateCustomer() {
+  // Ensure user has permission to update customers
+  // Validate input data and ensure tenant isolation
+  // Update customer details in the database
+  // Return the updated customer record
 }
 
 export async function deleteCustomer(

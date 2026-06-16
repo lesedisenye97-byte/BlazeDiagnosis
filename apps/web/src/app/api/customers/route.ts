@@ -42,9 +42,15 @@ export async function GET(request: Request) {
     );
   }
 }
-// TODO: Add the POST method to create a new customer and return the created customer in the response
+
+// The POST function is responsible for handling the creation of a new customer. 
 
 export async function POST(req: Request) {
+
+  // The try block is used to handle the main logic of the POST request, which includes validating the tenant context, parsing the request body, 
+  // validating the input against the schema, and creating a new customer in the database. 
+  // If any of these steps fail, the catch block will handle the error and return a JSON response with an appropriate error message and status code.
+
   try {
     const tenant = await requireTenantContext();
     const body = await req.json();

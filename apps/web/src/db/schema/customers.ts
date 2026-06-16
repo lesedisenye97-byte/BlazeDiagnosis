@@ -32,6 +32,7 @@ export const customers = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
+      // Soft delete column
   },
   (table) => [
     index('customers_tenant_email_idx').on(table.tenantId, table.email),
