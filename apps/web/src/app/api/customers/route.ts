@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 export async function POST(req: Request) {
 
   // The try block is used to handle the main logic of the POST request, which includes validating the tenant context, parsing the request body, 
-  // validating the input against the schema, and creating a new customer in the database. 
+  // validating the input against the schema, and creating a new customer in the database.
   // If any of these steps fail, the catch block will handle the error and return a JSON response with an appropriate error message and status code.
 
   try {

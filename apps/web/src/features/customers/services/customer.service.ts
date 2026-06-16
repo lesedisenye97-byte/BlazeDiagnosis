@@ -9,7 +9,20 @@ export async function createCustomer(
   input: CreateCustomerInput,
 ) {
   await requireTenantPermission(tenantId, 'customers.write');
+  
   //TODO : Add duplicate check for email and phone number to prevent creating duplicate customers within the same tenant.
+
+    const whereCondition = input.phone
+    ? and(eq(customers.tenantId, tenantId), eq(customers.phone, input.phone))
+    : eq(customers.tenantId, tenantId);
+
+
+  const [existingPhone] = await db
+    .select()
+    .from(customers)
+    .where(whereCondition)
+    .limit(1);
+
   const [customer] = await db
     .insert(customers)
     .values({
