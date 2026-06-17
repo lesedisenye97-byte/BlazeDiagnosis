@@ -10,7 +10,7 @@ export const CustomerList: React.FC = () => {
     ]);
 
     return (
-        <div className={"p-20px font-sans"}>
+        <div className="p-20px font-sans">
             <h2>Customer Dictionary</h2>
             <table className="w-full border-collapse text-left">
                 <thead>
