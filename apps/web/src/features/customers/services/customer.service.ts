@@ -27,6 +27,21 @@ export async function createCustomer(
     throw new Error ('A customer with the same phone number already exists in this tenant.');
   }
 
+  const emailChecker = input.email
+    ? and(eq(customers.tenantId, tenantId), eq(customers.email, input.email))
+    : eq(customers.tenantId, tenantId);
+
+
+  const [existingEmail] = await db
+    .select()
+    .from(customers)
+    .where(emailChecker)
+    .limit(1);
+
+  if (existingEmail) {
+    throw new Error('A customer with the same phone number already exists in this tenant.');
+  }
+
   const [customer] = await db
     .insert(customers)
     .values({
