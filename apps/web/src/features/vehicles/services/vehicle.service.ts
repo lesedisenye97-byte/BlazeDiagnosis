@@ -72,3 +72,20 @@ export async function listVehiclesForCustomer(
       ),
     );
 }
+
+// DELETE Function
+export async function deleteVehicle(
+  tenantId: string,
+  vehicleId: string,
+) {
+  await requireTenantPermission(tenantId, 'vehicles.write');
+
+  await db
+    .delete(vehicles)
+    .where(
+      and(
+        eq(vehicles.id, vehicleId),
+        eq(vehicles.tenantId, tenantId),
+      ),
+    );
+}

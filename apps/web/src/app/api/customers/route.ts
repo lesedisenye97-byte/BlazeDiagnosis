@@ -1,6 +1,5 @@
 import { createCustomerSchema } from '@/features/customers/schemas/customer.schema';
 import { createCustomer } from '@/features/customers/services/customer.service';
-import { deleteCustomer } from '@/features/customers/services/customer.service';
 import { requireTenantContext } from '@/lib/tenancy/tenant-context';
 import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
@@ -63,30 +62,3 @@ export async function POST(req: Request) {
 
 //TODO: Add the catch statement to the try operator dont forget to return JSON
 
-export async function DELETE(req: Request) {
-  try {
-    const tenant = await requireTenantContext();
-
-    const { searchParams } = new URL(req.url);
-    const customerId = searchParams.get('customerId');
-
-    if (!customerId) {
-      return NextResponse.json(
-        { error: 'Missing customerId' },
-        { status: 400 }
-      );
-    }
-
-    await deleteCustomer(tenant.tenantId, customerId);
-
-    return NextResponse.json(
-      { message: 'Customer deleted successfully' },
-      { status: 200 }
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to delete customer' },
-      { status: 500 }
-    );
-  }
-}

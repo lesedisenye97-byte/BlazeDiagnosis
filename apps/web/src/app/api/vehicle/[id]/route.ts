@@ -1,5 +1,7 @@
 import { listVehiclesForCustomer } from '@/features/vehicles/services/vehicle.service';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireTenantContext } from '@/lib/tenancy/tenant-context';
+import { deleteVehicle } from '@/features/vehicles/services/vehicle.service';
 
 export async function GET(
   request: NextRequest,
@@ -27,6 +29,33 @@ try {
     return NextResponse.json(
       { error: 'Failed to fetch vehicles for the customer' },
       { status: 500 },
+    );
+  }
+}
+
+// DELETE
+export async function DELETE(request: Request, 
+
+  // Extract ID from URL
+  { params }: {params: { id: string } }
+) {
+  try {
+    // Get tenant (security check)
+    const tenant = await requireTenantContext();
+
+    // Delete vehicle in DB using service layer
+    await deleteVehicle(tenant.tenantId, params.id);
+
+    // Return success message
+    return NextResponse.json(
+      { message: 'Vehicle deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error) {
+    // Return server error if deletion fails
+    return NextResponse.json(
+      { error: 'Failed to delete vehicle' },
+      { status: 500 }
     );
   }
 }

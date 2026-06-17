@@ -1,5 +1,6 @@
 import { AppShell } from '@/components/common/app-shell';
 import { StatCard } from '@/components/common/stat-card';
+import CustomerPage from '@/components/Customer/Customer-Form';
 import { CustomerList } from '@/components/Customer/Customer-list';
 
 export default function CustomerDashboardPage() {
@@ -11,6 +12,7 @@ export default function CustomerDashboardPage() {
         <StatCard label="Open invoices" value="0" />
         <StatCard label="Vehicles" value="2" />
       </div>
+      <CustomerPage/>
       <CustomerList/>
     </AppShell>
   );
