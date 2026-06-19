@@ -9,7 +9,7 @@ import { tenants } from './schema/tenants';
 import { customers } from './schema/customers';
 import { auditLogs } from './schema/audit';
 
-// Optional JSON filler data
+// ✅ Safely load external filler data JSON
 const fillerDataPath = path.join(__dirname, 'filler-data.json');
 let fillerData: {
   customers?: { firstName: string; lastName: string; email: string }[];
@@ -25,14 +25,15 @@ if (!databaseUrl) throw new Error('DATABASE_URL environment variable is missing 
 
 const pool = new Pool({ connectionString: databaseUrl });
 const db = drizzle(pool);
+
 const SYSTEM_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
 async function main() {
-  console.log('🚀 Starting isolated database seeding process...');
+  console.log('⏳ Starting isolated database seeding process from JSON sources...');
 
   try {
     // 1️⃣ Create foundational tenant
-    console.log('Seeding default developer tenant...');
+    console.log('🏢 Seeding default developer tenant...');
     await db.insert(tenants).values({
       id: SYSTEM_TENANT_ID,
       name: 'Blaze POS Dev Workshop',
@@ -41,7 +42,7 @@ async function main() {
 
     // 2️⃣ Seed customers — prefer JSON, fallback to static
     const customerData = fillerData.customers?.length
-      ? fillerData.customers.map((c) => ({
+      ? fillerData.customers.map((c: { firstName: string; lastName: string; email: string }) => ({
           tenantId: SYSTEM_TENANT_ID,
           firstName: c.firstName,
           lastName: c.lastName,
@@ -57,7 +58,7 @@ async function main() {
 
     // 3️⃣ Seed audit logs — prefer JSON, fallback to static
     const auditData = fillerData.auditLogs?.length
-      ? fillerData.auditLogs.map((log) => ({
+      ? fillerData.auditLogs.map((log: { action: string; entityType: string }) => ({
           tenantId: SYSTEM_TENANT_ID,
           action: log.action,
           entityType: log.entityType,
@@ -67,12 +68,12 @@ async function main() {
           { tenantId: SYSTEM_TENANT_ID, action: 'SYSTEM_INITIALIZATION', entityType: 'SYSTEM', entityId: SYSTEM_TENANT_ID },
         ];
 
-    console.log(`Seeding ${auditData.length} audit records...`);
+    console.log(`📜 Seeding ${auditData.length} audit records...`);
     await db.insert(auditLogs).values(auditData).onConflictDoNothing();
 
-    console.log(' Database seeding completed successfully!');
+    console.log('✅ Database seeding completed successfully!');
   } catch (error) {
-    console.error(' Critical failure encountered during seeding operation:', error);
+    console.error('❌ Critical failure encountered during seeding operation:', error);
     process.exit(1);
   } finally {
     await pool.end();
@@ -81,3 +82,4 @@ async function main() {
 }
 
 main();
+
