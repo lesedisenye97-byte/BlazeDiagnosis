@@ -1,8 +1,29 @@
 // apps/web/src/features/quotes/services/quote.service.ts
 import { sql } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { quoteApprovalEvents, quoteLineItems, quotes } from '@/db/schema';
 import { requireTenantPermission } from '@/lib/auth/auth-guards';
+
+// Helper function to safely get the first row from a query result
+function getFirstRow(result: { rows?: unknown[] } | unknown[]): unknown {
+  if (result && typeof result === 'object' && 'rows' in result && Array.isArray(result.rows)) {
+    return result.rows.length > 0 ? result.rows[0] : undefined;
+  }
+  if (Array.isArray(result)) {
+    return result.length > 0 ? result[0] : undefined;
+  }
+  return undefined;
+}
+
+// Helper function to get all rows from a query result
+function getRows(result: { rows?: unknown[] } | unknown[]): unknown[] {
+  if (result && typeof result === 'object' && 'rows' in result && Array.isArray(result.rows)) {
+    return result.rows;
+  }
+  if (Array.isArray(result)) {
+    return result;
+  }
+  return [];
+}
 
 // ============================================
 // QUOTE CRUD OPERATIONS
@@ -15,36 +36,19 @@ export async function createQuoteFromJobCard(
 ) {
   console.log("createQuoteFromJobCard called with:", { tenantId, jobCardId, customerId });
   
-  // Validate inputs
-  if (!tenantId) {
-    throw new Error("Tenant ID is required");
-  }
-  if (!jobCardId) {
-    throw new Error("Job Card ID is required");
-  }
-  if (!customerId) {
-    throw new Error("Customer ID is required");
-  }
+  if (!tenantId) throw new Error("Tenant ID is required");
+  if (!jobCardId) throw new Error("Job Card ID is required");
+  if (!customerId) throw new Error("Customer ID is required");
   
   await requireTenantPermission(tenantId, 'quotes.create');
 
-  // Generate a unique quote number
   const quoteNumber = `Q-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
   console.log("Generated quote number:", quoteNumber);
 
-  // Use raw SQL to insert
   const result = await db.execute(sql`
     INSERT INTO quotes (
-      tenant_id, 
-      job_card_id, 
-      customer_id, 
-      quote_number, 
-      version, 
-      status, 
-      subtotal, 
-      tax_total, 
-      discount_total, 
-      total
+      tenant_id, job_card_id, customer_id, quote_number, 
+      version, status, subtotal, tax_total, discount_total, total
     ) VALUES (
       ${tenantId}::uuid,
       ${jobCardId}::uuid,
@@ -59,8 +63,7 @@ export async function createQuoteFromJobCard(
     ) RETURNING *
   `);
 
-  // Extract the quote from the result
-  const quote = result.rows ? result.rows[0] : result[0];
+  const quote = getFirstRow(result);
   console.log("Quote created successfully:", quote);
   return quote;
 }
@@ -71,29 +74,29 @@ export async function getQuoteWithItems(
 ) {
   await requireTenantPermission(tenantId, 'quotes.view');
 
-  const [quote] = await db
-    .select()
-    .from(quotes)
-    .where({
-      tenant_id: tenantId,
-      id: quoteId,
-    })
-    .limit(1);
+  const quoteResult = await db.execute(sql`
+    SELECT * FROM quotes 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND id = ${quoteId}::uuid 
+    LIMIT 1
+  `);
+
+  const quote = getFirstRow(quoteResult);
 
   if (!quote) {
     return null;
   }
 
-  const items = await db
-    .select()
-    .from(quoteLineItems)
-    .where({
-      tenant_id: tenantId,
-      quote_id: quoteId,
-    });
+  const itemsResult = await db.execute(sql`
+    SELECT * FROM quote_line_items 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND quote_id = ${quoteId}::uuid
+  `);
+
+  const items = getRows(itemsResult);
 
   return {
-    ...quote,
+    ...quote as Record<string, unknown>,
     items,
   };
 }
@@ -110,26 +113,32 @@ export async function getQuotes(
 ) {
   await requireTenantPermission(tenantId, 'quotes.view');
 
-  let query = db
-    .select()
-    .from(quotes)
-    .where({
-      tenant_id: tenantId,
-      ...(filters?.status && { status: filters.status }),
-      ...(filters?.customerId && { customer_id: filters.customerId }),
-      ...(filters?.jobCardId && { job_card_id: filters.jobCardId }),
-    });
+  let query = sql`
+    SELECT * FROM quotes 
+    WHERE tenant_id = ${tenantId}::uuid
+  `;
 
-  query = query.orderBy(quotes.created_at);
+  if (filters?.status) {
+    query = sql`${query} AND status = ${filters.status}`;
+  }
+  if (filters?.customerId) {
+    query = sql`${query} AND customer_id = ${filters.customerId}::uuid`;
+  }
+  if (filters?.jobCardId) {
+    query = sql`${query} AND job_card_id = ${filters.jobCardId}::uuid`;
+  }
+
+  query = sql`${query} ORDER BY created_at DESC`;
 
   if (filters?.limit) {
-    query = query.limit(filters.limit);
+    query = sql`${query} LIMIT ${filters.limit}`;
   }
   if (filters?.offset) {
-    query = query.offset(filters.offset);
+    query = sql`${query} OFFSET ${filters.offset}`;
   }
 
-  return await query;
+  const result = await db.execute(query);
+  return getRows(result);
 }
 
 // ============================================
@@ -144,7 +153,7 @@ export async function addQuoteLineItem(
     description: string;
     quantity: number;
     unitPrice: number;
-    type: 'part' | 'labor' | 'diagnostic' | 'consumable' | 'optional_service'; // ← Updated enum values
+    type: 'part' | 'labor' | 'diagnostic' | 'consumable' | 'optional_service';
     supplierId?: string;
   },
 ) {
@@ -152,18 +161,11 @@ export async function addQuoteLineItem(
   
   await requireTenantPermission(tenantId, 'quotes.update');
 
-  // Validate input
-  if (!input.description) {
-    throw new Error("Description is required");
-  }
-  if (input.quantity <= 0) {
-    throw new Error("Quantity must be greater than 0");
-  }
-  if (input.unitPrice <= 0) {
-    throw new Error("Unit price must be greater than 0");
-  }
+  if (!input.description) throw new Error("Description is required");
+  if (input.quantity <= 0) throw new Error("Quantity must be greater than 0");
+  if (input.unitPrice <= 0) throw new Error("Unit price must be greater than 0");
 
-  // Check if quote exists using raw SQL
+  // Check if quote exists
   const quoteResult = await db.execute(sql`
     SELECT id, status FROM quotes 
     WHERE tenant_id = ${tenantId}::uuid 
@@ -171,37 +173,31 @@ export async function addQuoteLineItem(
     LIMIT 1
   `);
 
-  const quote = quoteResult.rows ? quoteResult.rows[0] : quoteResult[0];
+  const quote = getFirstRow(quoteResult);
 
   if (!quote) {
     throw new Error('Quote not found.');
   }
 
-  if (quote.status !== 'draft' && quote.status !== 'sent') {
-    throw new Error('Cannot add items to a quote that is not draft or sent.');
+  if (typeof quote === 'object' && quote !== null) {
+    const quoteObj = quote as { status: string };
+    if (quoteObj.status !== 'draft' && quoteObj.status !== 'sent') {
+      throw new Error('Cannot add items to a quote that is not draft or sent.');
+    }
   }
 
   const total = input.quantity * input.unitPrice;
 
-  // Insert line item using raw SQL with correct enum values
   const result = await db.execute(sql`
     INSERT INTO quote_line_items (
-      tenant_id,
-      quote_id,
-      job_card_id,
-      category,
-      description,
-      quantity,
-      unit_price,
-      total,
-      tax_rate,
-      discount,
-      approval_status
+      tenant_id, quote_id, job_card_id, category,
+      description, quantity, unit_price, total,
+      tax_rate, discount, approval_status
     ) VALUES (
       ${tenantId}::uuid,
       ${quoteId}::uuid,
       ${jobCardId}::uuid,
-      ${input.type}::quote_line_category,  -- ← Cast to enum type
+      ${input.type}::quote_line_category,
       ${input.description},
       ${input.quantity},
       ${input.unitPrice},
@@ -212,10 +208,9 @@ export async function addQuoteLineItem(
     ) RETURNING *
   `);
 
-  const lineItem = result.rows ? result.rows[0] : result[0];
+  const lineItem = getFirstRow(result);
   console.log("Line item created:", lineItem);
 
-  // Recalculate quote totals
   await recalculateQuoteTotals(tenantId, quoteId);
 
   return lineItem;
@@ -228,32 +223,34 @@ export async function removeQuoteLineItem(
 ) {
   await requireTenantPermission(tenantId, 'quotes.update');
 
-  const [quote] = await db
-    .select()
-    .from(quotes)
-    .where({
-      tenant_id: tenantId,
-      id: quoteId,
-    })
-    .limit(1);
+  // Check if quote exists and is in draft
+  const quoteResult = await db.execute(sql`
+    SELECT status FROM quotes 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND id = ${quoteId}::uuid 
+    LIMIT 1
+  `);
+
+  const quote = getFirstRow(quoteResult);
 
   if (!quote) {
     throw new Error('Quote not found.');
   }
 
-  if (quote.status !== 'draft') {
-    throw new Error('Only draft quotes can have items removed.');
+  if (typeof quote === 'object' && quote !== null) {
+    const quoteObj = quote as { status: string };
+    if (quoteObj.status !== 'draft') {
+      throw new Error('Only draft quotes can have items removed.');
+    }
   }
 
-  await db
-    .delete(quoteLineItems)
-    .where({
-      tenant_id: tenantId,
-      quote_id: quoteId,
-      id: lineItemId,
-    });
+  await db.execute(sql`
+    DELETE FROM quote_line_items 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND quote_id = ${quoteId}::uuid 
+    AND id = ${lineItemId}::uuid
+  `);
 
-  // Recalculate quote totals
   await recalculateQuoteTotals(tenantId, quoteId);
 }
 
@@ -261,20 +258,18 @@ export async function recalculateQuoteTotals(
   tenantId: string,
   quoteId: string,
 ) {
-  // Get all line items using raw SQL
   const itemsResult = await db.execute(sql`
     SELECT total FROM quote_line_items 
     WHERE tenant_id = ${tenantId}::uuid 
     AND quote_id = ${quoteId}::uuid
   `);
 
-  const items = itemsResult.rows || itemsResult;
+  const items = getRows(itemsResult) as { total: string }[];
   
-  const subtotal = items.reduce((sum: number, item: any) => sum + Number(item.total), 0);
-  const tax = subtotal * 0.15; // 15% VAT
+  const subtotal = items.reduce((sum: number, item: { total: string }) => sum + Number(item.total), 0);
+  const tax = subtotal * 0.15;
   const total = subtotal + tax;
 
-  // Update quote totals using raw SQL
   await db.execute(sql`
     UPDATE quotes 
     SET 
@@ -296,50 +291,47 @@ export async function sendQuoteToCustomer(
 ) {
   await requireTenantPermission(tenantId, 'quotes.send');
 
-  const [quote] = await db
-    .select()
-    .from(quotes)
-    .where({
-      tenant_id: tenantId,
-      id: quoteId,
-    })
-    .limit(1);
+  const quoteResult = await db.execute(sql`
+    SELECT status FROM quotes 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND id = ${quoteId}::uuid 
+    LIMIT 1
+  `);
+
+  const quote = getFirstRow(quoteResult);
 
   if (!quote) {
     throw new Error('Quote not found.');
   }
 
-  if (quote.status !== 'draft') {
-    throw new Error('Only draft quotes can be sent.');
+  if (typeof quote === 'object' && quote !== null) {
+    const quoteObj = quote as { status: string };
+    if (quoteObj.status !== 'draft') {
+      throw new Error('Only draft quotes can be sent.');
+    }
   }
 
-  const items = await db
-    .select()
-    .from(quoteLineItems)
-    .where({
-      tenant_id: tenantId,
-      quote_id: quoteId,
-    });
+  const itemsResult = await db.execute(sql`
+    SELECT id FROM quote_line_items 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND quote_id = ${quoteId}::uuid
+  `);
+
+  const items = getRows(itemsResult);
 
   if (items.length === 0) {
     throw new Error('Cannot send a quote with no line items.');
   }
 
-  const [updated] = await db
-    .update(quotes)
-    .set({
-      status: 'sent',
-      sent_at: new Date(),
-    })
-    .where({
-      tenant_id: tenantId,
-      id: quoteId,
-    })
-    .returning();
+  const result = await db.execute(sql`
+    UPDATE quotes 
+    SET status = 'sent', sent_at = NOW()
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND id = ${quoteId}::uuid
+    RETURNING *
+  `);
 
-  // TODO: Create notification for customer
-  // TODO: Create audit log entry
-
+  const updated = getFirstRow(result);
   return updated;
 }
 
@@ -385,98 +377,94 @@ async function recordQuoteLineDecision(input: {
 }) {
   await requireTenantPermission(input.tenantId, 'quotes.approve');
 
-  return db.transaction(async (tx) => {
-    const [quote] = await tx
-      .select()
-      .from(quotes)
-      .where({
-        tenant_id: input.tenantId,
-        id: input.quoteId,
-      })
-      .limit(1);
+  // Get quote
+  const quoteResult = await db.execute(sql`
+    SELECT * FROM quotes 
+    WHERE tenant_id = ${input.tenantId}::uuid 
+    AND id = ${input.quoteId}::uuid 
+    LIMIT 1
+  `);
 
-    if (!quote) {
-      throw new Error('Quote not found.');
-    }
+  const quote = getFirstRow(quoteResult);
 
-    if (quote.customer_id !== input.customerId) {
-      throw new Error('Customer is not allowed to approve this quote.');
-    }
+  if (!quote) {
+    throw new Error('Quote not found.');
+  }
 
-    if (
-      quote.locked_at ||
-      quote.status === 'locked' ||
-      quote.status === 'expired'
-    ) {
-      throw new Error('Quote is locked or expired.');
-    }
+  const quoteObj = quote as { customer_id: string; locked_at: string | null; status: string };
 
-    const [lineItem] = await tx
-      .update(quoteLineItems)
-      .set({ 
-        approval_status: input.decision,
-      })
-      .where({
-        tenant_id: input.tenantId,
-        quote_id: input.quoteId,
-        id: input.quoteLineItemId,
-      })
-      .returning();
+  if (quoteObj.customer_id !== input.customerId) {
+    throw new Error('Customer is not allowed to approve this quote.');
+  }
 
-    if (!lineItem) {
-      throw new Error('Quote line item not found.');
-    }
+  if (quoteObj.locked_at || quoteObj.status === 'locked' || quoteObj.status === 'expired') {
+    throw new Error('Quote is locked or expired.');
+  }
 
-    await tx.insert(quoteApprovalEvents).values({
-      tenant_id: input.tenantId,
-      quote_id: input.quoteId,
-      quote_line_item_id: input.quoteLineItemId,
-      customer_id: input.customerId,
-      decision: input.decision,
-      reason: input.reason,
-    });
+  // Update line item
+  const lineItemResult = await db.execute(sql`
+    UPDATE quote_line_items 
+    SET approval_status = ${input.decision}
+    WHERE tenant_id = ${input.tenantId}::uuid 
+    AND quote_id = ${input.quoteId}::uuid 
+    AND id = ${input.quoteLineItemId}::uuid
+    RETURNING *
+  `);
 
-    const allLineItems = await tx
-      .select()
-      .from(quoteLineItems)
-      .where({
-        tenant_id: input.tenantId,
-        quote_id: input.quoteId,
-      });
+  const lineItem = getFirstRow(lineItemResult);
 
-    const hasPending = allLineItems.some(
-      (item) => item.approval_status === 'pending',
-    );
-    const hasApproved = allLineItems.some(
-      (item) =>
-        item.approval_status === 'approved' ||
-        item.approval_status === 'not_required',
-    );
-    const hasDeclined = allLineItems.some(
-      (item) => item.approval_status === 'declined',
-    );
-    const status = hasPending
-      ? hasApproved || hasDeclined
-        ? 'partially_approved'
-        : 'sent'
-      : hasApproved
-        ? hasDeclined
-          ? 'partially_approved'
-          : 'approved'
-        : 'declined';
+  if (!lineItem) {
+    throw new Error('Quote line item not found.');
+  }
 
-    await tx
-      .update(quotes)
-      .set({ 
-        status,
-      })
-      .where({
-        tenant_id: input.tenantId,
-        id: input.quoteId,
-      });
+  // Create approval event
+  await db.execute(sql`
+    INSERT INTO quote_approval_events (
+      tenant_id, quote_id, quote_line_item_id, 
+      customer_id, decision, reason
+    ) VALUES (
+      ${input.tenantId}::uuid,
+      ${input.quoteId}::uuid,
+      ${input.quoteLineItemId}::uuid,
+      ${input.customerId}::uuid,
+      ${input.decision},
+      ${input.reason || null}
+    )
+  `);
 
-    return lineItem;
-  });
+  // Get all line items to determine status
+  const allItemsResult = await db.execute(sql`
+    SELECT approval_status FROM quote_line_items 
+    WHERE tenant_id = ${input.tenantId}::uuid 
+    AND quote_id = ${input.quoteId}::uuid
+  `);
+
+  const allLineItems = getRows(allItemsResult) as { approval_status: string }[];
+
+  const hasPending = allLineItems.some((item: { approval_status: string }) => item.approval_status === 'pending');
+  const hasApproved = allLineItems.some(
+    (item: { approval_status: string }) => item.approval_status === 'approved' || item.approval_status === 'not_required'
+  );
+  const hasDeclined = allLineItems.some((item: { approval_status: string }) => item.approval_status === 'declined');
+
+  let status = 'draft';
+  if (hasPending) {
+    status = hasApproved || hasDeclined ? 'partially_approved' : 'sent';
+  } else if (hasApproved) {
+    status = hasDeclined ? 'partially_approved' : 'approved';
+  } else {
+    status = 'declined';
+  }
+
+  // Update quote status
+  await db.execute(sql`
+    UPDATE quotes 
+    SET status = ${status}
+    WHERE tenant_id = ${input.tenantId}::uuid 
+    AND id = ${input.quoteId}::uuid
+  `);
+
+  return lineItem;
 }
 
 export async function lockApprovedQuote(
@@ -485,51 +473,48 @@ export async function lockApprovedQuote(
 ) {
   await requireTenantPermission(tenantId, 'quotes.lock');
 
-  const [quote] = await db
-    .select()
-    .from(quotes)
-    .where({
-      tenant_id: tenantId,
-      id: quoteId,
-    })
-    .limit(1);
+  const quoteResult = await db.execute(sql`
+    SELECT status FROM quotes 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND id = ${quoteId}::uuid 
+    LIMIT 1
+  `);
+
+  const quote = getFirstRow(quoteResult);
 
   if (!quote) {
     throw new Error('Quote not found.');
   }
 
-  if (quote.status !== 'approved') {
+  const quoteObj = quote as { status: string };
+
+  if (quoteObj.status !== 'approved') {
     throw new Error('Only approved quotes can be locked.');
   }
 
   // Check all items are approved
-  const items = await db
-    .select()
-    .from(quoteLineItems)
-    .where({
-      tenant_id: tenantId,
-      quote_id: quoteId,
-    });
+  const itemsResult = await db.execute(sql`
+    SELECT approval_status FROM quote_line_items 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND quote_id = ${quoteId}::uuid
+  `);
 
-  const hasPending = items.some(item => item.approval_status === 'pending');
+  const items = getRows(itemsResult) as { approval_status: string }[];
+  const hasPending = items.some((item: { approval_status: string }) => item.approval_status === 'pending');
+
   if (hasPending) {
     throw new Error('Cannot lock a quote with pending items.');
   }
 
-  const [updated] = await db
-    .update(quotes)
-    .set({
-      status: 'locked',
-      locked_at: new Date(),
-    })
-    .where({
-      tenant_id: tenantId,
-      id: quoteId,
-    })
-    .returning();
+  const result = await db.execute(sql`
+    UPDATE quotes 
+    SET status = 'locked', locked_at = NOW()
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND id = ${quoteId}::uuid
+    RETURNING *
+  `);
 
-  // TODO: Create audit log entry
-
+  const updated = getFirstRow(result);
   return updated;
 }
 
@@ -541,17 +526,14 @@ export async function getCustomerQuotes(
   tenantId: string,
   customerId: string,
 ) {
-  // No permission check needed - this is for customers to view their own quotes
-  // The caller should verify the customer ID matches the authenticated user
+  const result = await db.execute(sql`
+    SELECT * FROM quotes 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND customer_id = ${customerId}::uuid
+    ORDER BY created_at DESC
+  `);
 
-  return await db
-    .select()
-    .from(quotes)
-    .where({
-      tenant_id: tenantId,
-      customer_id: customerId,
-    })
-    .orderBy(quotes.created_at);
+  return getRows(result);
 }
 
 export async function getQuoteApprovalEvents(
@@ -560,12 +542,12 @@ export async function getQuoteApprovalEvents(
 ) {
   await requireTenantPermission(tenantId, 'quotes.view');
 
-  return await db
-    .select()
-    .from(quoteApprovalEvents)
-    .where({
-      tenant_id: tenantId,
-      quote_id: quoteId,
-    })
-    .orderBy(quoteApprovalEvents.created_at);
+  const result = await db.execute(sql`
+    SELECT * FROM quote_approval_events 
+    WHERE tenant_id = ${tenantId}::uuid 
+    AND quote_id = ${quoteId}::uuid
+    ORDER BY created_at DESC
+  `);
+
+  return getRows(result);
 }

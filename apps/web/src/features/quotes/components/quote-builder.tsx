@@ -1,8 +1,9 @@
 // apps/web/src/features/quotes/components/QuoteBuilder.tsx
 "use client";
 
+
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ interface QuoteLineItem {
 }
 
 export function QuoteBuilder() {
-  const router = useRouter();
+  // const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [jobCardId, setJobCardId] = useState("");
   const [customerId, setCustomerId] = useState("");
@@ -72,43 +73,44 @@ export function QuoteBuilder() {
     return lineItems.reduce((sum, item) => sum + item.total, 0);
   };
 
-  const handleSaveDraft = async () => {
-    if (!jobCardId || !customerId) {
-      toast.error("Please select a job card and customer");
-      return;
-    }
+const handleSaveDraft = async () => {
+  if (!jobCardId || !customerId) {
+    toast.error("Please select a job card and customer");
+    return;
+  }
 
-    setSaving(true);
-    try {
-      const response = await fetch("/api/quotes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobCardId,
-          customerId,
-          lineItems: lineItems.map(item => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            type: item.type, // Now using correct enum values
-          })),
-        }),
-      });
+  setSaving(true);
+  try {
+    const response = await fetch("/api/quotes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jobCardId,
+        customerId,
+        lineItems: lineItems.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          type: item.type,
+        })),
+      }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        toast.success("Quote created successfully!");
-        router.push(`/station/quotes/${data.quote.id}`);
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Failed to create quote");
-      }
-    } catch {
-      toast.error("An error occurred");
-    } finally {
-      setSaving(false);
+    if (response.ok) {
+      const data = await response.json();
+      toast.success("Quote created successfully!");
+      // router.push(`/en/station/quotes/${data.quote.id}`); // TODO: Uncomment when quote detail page exists
+      toast.info("Quote created! ID: " + data.quote.id);
+    } else {
+      const errorData = await response.json();
+      toast.error(errorData.error || "Failed to create quote");
     }
-  };
+  } catch {
+    toast.error("An error occurred");
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleSendToCustomer = async () => {
     // First save as draft
@@ -198,7 +200,7 @@ export function QuoteBuilder() {
                   </div>
                   <div className="col-span-1">
                     <Button
-                      variant="destructive"
+                      variant="outline"
                       size="sm"
                       onClick={() => removeLineItem(item.id)}
                     >

@@ -24,33 +24,35 @@ export async function POST(request: NextRequest) {
     }
     
     // Create the quote
-    const quote = await createQuoteFromJobCard(
-      tenantId,
-      body.jobCardId,
-      body.customerId
-    );
-    
-    console.log("Quote created:", quote);
-    
-    // Add line items if they exist
-    if (body.lineItems && body.lineItems.length > 0) {
-      console.log("Adding line items:", body.lineItems);
-      for (const item of body.lineItems) {
-        if (item.description && item.quantity > 0 && item.unitPrice > 0) {
-          await addQuoteLineItem(
-            tenantId, 
-            quote.id, 
-            body.jobCardId, // Pass the jobCardId here
-            {
-              description: item.description,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              type: item.type || 'parts',
-            }
-          );
+const quote = await createQuoteFromJobCard(
+  tenantId,
+  body.jobCardId,
+  body.customerId
+);
+
+console.log("Quote created:", quote);
+
+// Add line items if they exist
+if (body.lineItems && body.lineItems.length > 0) {
+  console.log("Adding line items:", body.lineItems);
+  for (const item of body.lineItems) {
+    if (item.description && item.quantity > 0 && item.unitPrice > 0) {
+      // Type assertion - we know quote has an id property
+      const quoteObj = quote as { id: string };
+      await addQuoteLineItem(
+        tenantId, 
+        quoteObj.id,
+        body.jobCardId,
+        {
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          type: item.type || 'part',
         }
-      }
+      );
     }
+  }
+}
     
     return NextResponse.json({ quote }, { status: 201 });
   } catch (error) {
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // TODO: Implement fetching quotes for tenant
     return NextResponse.json({ quotes: [] });
