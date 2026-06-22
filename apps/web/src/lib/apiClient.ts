@@ -57,6 +57,15 @@ export async function createCustomerVehicleIntake(intakeData: unknown) {
   });
 }
 
+export async function createVehicle(vehicleData: unknown) {
+  return requestJson<{ vehicle: unknown }>('/api/vehicles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(vehicleData),
+    errorMessage: 'Failed to create vehicle.',
+  });
+}
+
 export async function createCustomer(customerId: string, customerData: unknown) {
   return requestJson<Customer>(`/api/customers/${customerId}`, {
     method: 'POST',
