@@ -29,7 +29,7 @@ export async function fetchCustomers(query?: string) {
 }
 
 export async function fetchCustomerById(customerId: string) {
-  return requestJson<Customer>(/api/customers/${customerId}, {
+  return requestJson<Customer>(`/api/customers/${customerId}`, {
     errorMessage: 'Failed to fetch customer profile detail records.',
   });
 }
@@ -49,7 +49,7 @@ export async function fetchCustomerIntakeHistory(customerid:string)
 }
 
 export async function createCustomerVehicleIntake(intakeData: unknown) {
-  return requestJson<{ intake: unknown }>(/api/customer-intakes, {
+  return requestJson<{ intake: unknown }>("/api/customer-intakes", {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(intakeData),
@@ -63,5 +63,15 @@ export async function createCustomer(customerData: unknown) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(customerData),
     errorMessage: 'Failed to create new customer profile.',
+  });
+}
+
+// Form Submission: Update an existing customer profile record
+export async function updateCustomer(customerId: string, customerData: unknown) {
+  return requestJson<Customer>(`/api/customers/${customerId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(customerData),
+    errorMessage: 'Failed to update customer profile data.',
   });
 }
