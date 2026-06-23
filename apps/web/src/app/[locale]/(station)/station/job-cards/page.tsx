@@ -1,19 +1,17 @@
-import { AppShell } from '@/components/common/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell } from '@/components/common/appShell';
+import { PlaceholderCard } from '@/components/common/placeholderCard';
 
 export default function Page() {
   return (
-    <AppShell surface="station" title="Job cards">
-      <Card>
-        <CardHeader>
-          <CardTitle>Job cards</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-neutral-600">
-            Workshop job cards, assignments, and statuses.
-          </p>
-        </CardContent>
-      </Card>
+    <AppShell
+      description="Workshop job cards, assignments, blockers, diagnostics, and service status tracking."
+      surface="station"
+      title="Job cards"
+    >
+      <PlaceholderCard
+        description="This screen has been restyled and reserved for the MVP service implementation."
+        title="Job cards"
+      />
     </AppShell>
   );
 }

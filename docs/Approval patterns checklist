@@ -1,0 +1,47 @@
+Quote Approval Patterns Checklist
+
+Data Requirements
+- Fields needed:
+  - Customer name, contact info
+  - Quote ID
+  - Items/services, quantity, pricing
+  - Approval status (pending, approved, rejected)
+
+Validation rules
+- Quote amount must be numeric
+- Approval status must be restricted to defined values
+
+Security Checklist
+- Role‑based access:
+  - Only authorized staff can approve or rejected
+- Audit trail:
+  - Log approver name, role, timestamp
+- Data retention:
+  - Quotes stored for minimum 5 years (compliance)
+- Sensitive data:
+  - Customer personal info not exposed in logs
+
+After Approval
+- Quote converted into invoice or sent to customer
+- Approval logged in audit trail
+- Notifications sent to relevant team members
+
+After Rejection
+- Quote flagged as rejected in system
+- Editable and resubmittable after adjustments
+- Rejection must be logged
+
+Integration Notes
+- External systems:
+  - QuickBooks / Xero APIs for quote handling
+- Endpoints needed:
+  - Submit new quote
+  - Update approval status
+  - Fetch approval history
+- Notifications:
+  - Email or dashboard alerts on approval/rejection
+
+Example Scenarios
+- Example 1: Quote under R10,000 → auto‑approval or single manager approval
+- Example 2: Quote above R50,000 → manager + finance approval required
+- Example 3: Quote rejected at R20,000 → editable, resubmittable, logged in audit trail

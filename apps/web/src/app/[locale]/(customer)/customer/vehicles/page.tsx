@@ -1,19 +1,17 @@
-import { AppShell } from '@/components/common/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell } from '@/components/common/appShell';
+import { PlaceholderCard } from '@/components/common/placeholderCard';
 
 export default function Page() {
   return (
-    <AppShell surface="customer" title="Customer vehicles">
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer vehicles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-neutral-600">
-            Vehicle profiles linked to the signed-in customer.
-          </p>
-        </CardContent>
-      </Card>
+    <AppShell
+      description="Customer-owned vehicle profiles and service-history entry points."
+      surface="customer"
+      title="Vehicles"
+    >
+      <PlaceholderCard
+        description="This screen has been restyled and reserved for the MVP service implementation."
+        title="Customer vehicles"
+      />
     </AppShell>
   );
 }

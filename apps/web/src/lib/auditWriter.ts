@@ -8,92 +8,44 @@
  *   append-only audit stream.
  */
 
-export type AuditEventType =
-  | 'QUOTE_CREATED'
-  | 'QUOTE_SENT'
-  | 'QUOTE_APPROVED'
-  | 'QUOTE_DECLINED'
-  | 'JOB_CREATED'
-  | 'JOB_STATUS_UPDATED'
-  | 'JOB_COMPLETED'
-  | 'INVOICE_CREATED'
-  | 'INVOICE_ISSUED'
-  | 'INVOICE_PAID'
-  | 'INVOICE_VOIDED'
-  | 'PAYMENT_RECEIVED'
-  | 'CUSTOMER_VIEWED_INVOICE'
-  | 'AUDIT_ERROR'
+export type AuditAction =
+    | 'CREATE'
+    | 'UPDATE'
+    | 'DELETE'
+    | 'VIEW'
+    | 'SEND'
+    | 'ERROR'
 
-export type AuditEntityType =
-  | 'QUOTE'
-  | 'JOB'
-  | 'INVOICE'
-  | 'PAYMENT'
-  | 'CUSTOMER'
-  | 'USER'
-  | 'WORKSHOP'
-  | 'OTHER'
+export type AuditResource = 'INVOICE' | 'JOB' | 'PAYMENT' | 'USER' | 'WORKSHOP' | 'OTHER'
 
-export type AuditMetadata = Record<string, unknown>
-
-export type AuditWriterInput = {
-  eventType: AuditEventType
-  tenantId: string
-  actorId?: string
-  entityType: AuditEntityType
-  entityId?: string
-  metadata?: AuditMetadata
-  ipAddress?: string
-  userAgent?: string
-  requestId?: string
-  timestamp?: string
+export type AuditEntry = {
+    userId?: string
+    action: AuditAction
+    resource: AuditResource
+    resourceId?: string
+    description?: string
+    changeSet?: Record<string, unknown>
+    ipAddress?: string
+    userAgent?: string
+    timestamp?: string
 }
 
-export const importantAuditEvents: AuditEventType[] = [
-  'QUOTE_CREATED',
-  'QUOTE_SENT',
-  'QUOTE_APPROVED',
-  'QUOTE_DECLINED',
-  'JOB_CREATED',
-  'JOB_STATUS_UPDATED',
-  'JOB_COMPLETED',
-  'INVOICE_CREATED',
-  'INVOICE_ISSUED',
-  'INVOICE_PAID',
-  'INVOICE_VOIDED',
-  'PAYMENT_RECEIVED',
-  'CUSTOMER_VIEWED_INVOICE',
-  'AUDIT_ERROR',
-]
 
-export async function writeAudit(input: AuditWriterInput) {
-  const payload = {
-    tenantId: input.tenantId,
-    actorUserId: input.actorId,
-    action: input.eventType,
-    entityType: input.entityType,
-    entityId: input.entityId,
-    previousValue: null,
-    newValue: input.metadata ?? null,
-    ipAddress: input.ipAddress,
-    userAgent: input.userAgent,
-    requestId: input.requestId,
-    timestamp: input.timestamp ?? new Date().toISOString(),
-  }
 
-  // TODO: wire this helper to server-side audit persistence in
-  // `features/audit/services/audit.service.ts`.
-  if (typeof window === 'undefined') {
-    // Server-side placeholder until persistence is integrated.
+export async function writeAudit(entry: AuditEntry) {
+    // Placeholder: in real implementation call a server-only API or directly
+    // insert into DB from server context. For now, just log to console so
+    // developers can see the intended shape during development.
+    const payload = {
+        ...entry,
+        timestamp: entry.timestamp ?? new Date().toISOString(),
+    }
+
     // eslint-disable-next-line no-console
-    console.info('[AUDIT] server', JSON.stringify(payload))
-    return { ok: true, payload }
-  }
+    console.info('[AUDIT]', JSON.stringify(payload))
 
-  // Client-side fallback for development and local debugging.
-  // eslint-disable-next-line no-console
-  console.info('[AUDIT] client', JSON.stringify(payload))
-  return { ok: true, payload }
+    // Return a placeholder success result
+    return { ok: true }
 }
 
-export default { writeAudit, importantAuditEvents }
+export default { writeAudit }

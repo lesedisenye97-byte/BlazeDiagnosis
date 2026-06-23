@@ -1,19 +1,17 @@
-import { AppShell } from '@/components/common/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell } from '@/components/common/appShell';
+import { PlaceholderCard } from '@/components/common/placeholderCard';
 
 export default function Page() {
   return (
-    <AppShell surface="platform" title="Tenants">
-      <Card>
-        <CardHeader>
-          <CardTitle>Tenants</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-neutral-600">
-            SaaS tenant creation, suspension, and support overview.
-          </p>
-        </CardContent>
-      </Card>
+    <AppShell
+      description="Platform tenant directory with branding, domains, status, and configuration entry points."
+      surface="platform"
+      title="Tenants"
+    >
+      <PlaceholderCard
+        description="This screen has been restyled and reserved for the MVP service implementation."
+        title="Tenants"
+      />
     </AppShell>
   );
 }

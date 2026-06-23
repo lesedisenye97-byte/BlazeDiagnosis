@@ -1,19 +1,17 @@
-import { AppShell } from '@/components/common/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell } from '@/components/common/appShell';
+import { PlaceholderCard } from '@/components/common/placeholderCard';
 
 export default function Page() {
   return (
-    <AppShell surface="supplier" title="Supplier orders">
-      <Card>
-        <CardHeader>
-          <CardTitle>Supplier orders</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-neutral-600">
-            Accepted parts orders awaiting dispatch or delivery.
-          </p>
-        </CardContent>
-      </Card>
+    <AppShell
+      description="Accepted parts orders awaiting dispatch, in transit, delayed, or delivered."
+      surface="supplier"
+      title="Supplier orders"
+    >
+      <PlaceholderCard
+        description="This screen has been restyled and reserved for the MVP service implementation."
+        title="Supplier orders"
+      />
     </AppShell>
   );
 }

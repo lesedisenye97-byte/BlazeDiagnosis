@@ -1,19 +1,17 @@
-import { AppShell } from '@/components/common/app-shell';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppShell } from '@/components/common/appShell';
+import { PlaceholderCard } from '@/components/common/placeholderCard';
 
 export default function Page() {
   return (
-    <AppShell surface="customer" title="Customer quotes">
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer quotes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-neutral-600">
-            Quotes awaiting item-level approval and quote history.
-          </p>
-        </CardContent>
-      </Card>
+    <AppShell
+      description="Active, approved, and declined quote items with mobile-first approval history."
+      surface="customer"
+      title="Quotes"
+    >
+      <PlaceholderCard
+        description="This screen has been restyled and reserved for the MVP service implementation."
+        title="Customer quotes"
+      />
     </AppShell>
   );
 }
