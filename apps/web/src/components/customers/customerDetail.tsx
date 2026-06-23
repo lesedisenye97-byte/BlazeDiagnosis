@@ -99,7 +99,7 @@ export default function CustomerDetailPage() {
   const fullName = `${customer.name} ${customer.surname}`;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-10">
+    <div className="p-6 max-w-6xl mx-auto space-y-10 bg-[#0ea5e9] text-white min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -133,7 +133,7 @@ export default function CustomerDetailPage() {
 
       {/* Customer Metadata */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-white border rounded-2xl p-8 space-y-4">
+        <div className="bg-[#0ea5e9] border border-white rounded-2xl p-8 space-y-4">
           <h2 className="text-2xl font-semibold">Customer Information</h2>
 
           <div><strong>Full Name:</strong> {fullName}</div>
@@ -147,9 +147,9 @@ export default function CustomerDetailPage() {
             </div>
           )}
 
-          <hr className="my-4" />
+          <hr className="my-4 border-white" />
 
-          <div className="text-sm text-gray-600 space-y-1">
+          <div className="text-sm space-y-1">
             <div><strong>Created:</strong> {customer.createdAt && new Date(customer.createdAt).toLocaleString()}</div>
             <div><strong>Updated:</strong> {customer.updatedAt && new Date(customer.updatedAt).toLocaleString()}</div>
           </div>
@@ -167,7 +167,7 @@ export default function CustomerDetailPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {vehicles.map((v) => (
-                  <div key={v.id} className="border rounded-xl p-5">
+                  <div key={v.id} className="border border-white rounded-xl p-5 hover:border-[#f97316]">
                     <strong>{v.make} {v.model}</strong>
                     {v.year && <span> • {v.year}</span>}
                     {v.plate && <p className="mt-2">Plate: {v.plate}</p>}
@@ -188,7 +188,7 @@ export default function CustomerDetailPage() {
             ) : (
               <ul className="space-y-3">
                 {jobs.map((job) => (
-                  <li key={job.id} className="border rounded-xl p-4">
+                  <li key={job.id} className="border border-white rounded-xl p-4 hover:border-[#f97316]">
                     <strong>{job.title}</strong>
                     <div>Status: {job.status}</div>
                   </li>
@@ -208,7 +208,7 @@ export default function CustomerDetailPage() {
             ) : (
               <ul className="space-y-3">
                 {quotes.map((q) => (
-                  <li key={q.id} className="border rounded-xl p-4">
+                  <li key={q.id} className="border border-white rounded-xl p-4 hover:border-[#f97316]">
                     <strong>Quote #{q.reference}</strong>
                     <div>Total: R{q.total.toFixed(2)}</div>
                   </li>
