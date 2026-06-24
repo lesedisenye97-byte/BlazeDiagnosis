@@ -23,7 +23,7 @@ export function VehicleDetail({ vehicleId }: VehicleDetailProps) {
           `/api/vehicles/${vehicleId}`,
           { errorMessage: 'Unable to load vehicle.' },
         );
-        setVehicle(data.vehicles[0] ?? null);
+        setVehicle(data.vehicle);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'Unable to load vehicle.');
       } finally {

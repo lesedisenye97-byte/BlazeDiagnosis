@@ -12,9 +12,9 @@ export async function GET(_request: Request, { params }: ApiRouteContext) {
   try {
     const { id } = await params;
     const tenant = await requireTenantContext();
-    const vehicles = await listVehiclesForCustomer(tenant.tenantId, id);
+    const vehicle = await listVehiclesForCustomer(tenant.tenantId, id);
 
-    return apiOk({ vehicles }, { meta: { count: vehicles.length } });
+    return apiOk({ vehicle }, { meta: { count: vehicle.length } });
   } catch (error) {
     return handleApiError(`GET ${routeName}`, error);
   }

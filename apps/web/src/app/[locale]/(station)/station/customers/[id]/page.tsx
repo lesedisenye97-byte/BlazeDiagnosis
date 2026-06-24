@@ -1,2 +1,1 @@
-//TODO: Import Customer Details component into here.
-//Assigned to First Years
+import { CustomerDetail } from "@/components/customers/customerDetail";

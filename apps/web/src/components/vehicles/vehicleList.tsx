@@ -3,6 +3,8 @@
 import { requestJson } from '@/lib/apiClient';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { deleteVehicle } from '@/lib/apiClient';
+
 
 import { StatusBadge } from '@/components/common/statusBadge';
 import {
@@ -38,6 +40,16 @@ export function VehicleList() {
   const [loading, setLoading] = useState(true); // added
   const [error, setError] = useState<string | null>(null); //added
   const router = useRouter();
+  
+  const handleDelete = async (id: string) => {
+  if (!confirm('Archive this vehicle?')) return;
+  try {
+    await deleteVehicle(id);
+    setVehicles((current) => current.filter((v) => v.id !== id));
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Failed to delete vehicle.');
+  }
+};
 
   // added: fetch real vehicles on mount
   useEffect(() => {
@@ -128,7 +140,19 @@ export function VehicleList() {
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search registration, VIN, make..."
             value={searchQuery}
+            className="pr-8" //Added padding
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm"
+              type="button"
+              aria-label="Clear search"
+            >
+              ✕
+              </button>
+            )}
+            {/* Added a reset button to clear the search bar*/}
         </div>
       </CardHeader>
       <CardContent>
@@ -176,6 +200,15 @@ export function VehicleList() {
                       {vehicle.status}
                     </StatusBadge>
                   </td>
+                  <td className={tableCellClassName}>
+                    <button
+                      className="text-xs text-destructive hover:underline"
+                      onClick={(e) => { e.stopPropagation(); void handleDelete(vehicle.id); }}
+                      type="button"
+                    >
+                      Delete
+                    </button>
+                </td>
                 </tr>
               ))}
             </tbody>
