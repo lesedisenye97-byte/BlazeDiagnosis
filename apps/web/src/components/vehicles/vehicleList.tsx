@@ -140,7 +140,19 @@ export function VehicleList() {
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search registration, VIN, make..."
             value={searchQuery}
+            className="pr-8" //Added padding
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm"
+              type="button"
+              aria-label="Clear search"
+            >
+              ✕
+              </button>
+            )}
+            {/* Added a reset button to clear the search bar*/}
         </div>
       </CardHeader>
       <CardContent>
