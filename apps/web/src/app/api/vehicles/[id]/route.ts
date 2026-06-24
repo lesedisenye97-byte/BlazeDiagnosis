@@ -1,8 +1,9 @@
 import {
   deleteVehicle,
-  listVehiclesForCustomer,
+  //listVehiclesForCustomer,
+  getVehicleById
 } from '@/features/vehicles/services/vehicleService';
-import { apiOk, handleApiError } from '@/lib/api/response';
+import { apiOk, handleApiError, apiError } from '@/lib/api/response';
 import { requireTenantContext } from '@/lib/tenancy/tenantContext';
 import type { ApiRouteContext } from '@/types/api';
 
@@ -12,7 +13,7 @@ export async function GET(_request: Request, { params }: ApiRouteContext) {
   try {
     const { id } = await params;
     const tenant = await requireTenantContext();
-    const vehicle = await getVehiclesByID(tenant.tenantId, id);
+    const vehicle = await getVehicleById(tenant.tenantId, id);
 
     if (!vehicle){
       return apiError('NOT_FOUND', 'Vehicle not found.', 404, { id });
